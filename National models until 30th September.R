@@ -87,24 +87,35 @@ f = ggplot() + theme_void()
 var(df_nacional$casos.nuevos)
 mean(df_nacional$casos.nuevos)
 
+#-------------------------------------------------------------------------------#
+#-------------------------------------------------------------------------------#
+poblacion_nacional = 19678363
+df_nacional = df_nacional %>% mutate(p_casos.nuevos = (casos.nuevos/poblacion_nacional)*100000)
+df_nacional = df_nacional %>% mutate(p_casos.activos = (casos.activos/poblacion_nacional)*100000)
+df_nacional = df_nacional %>% mutate(p_camas.uci = (camas.uci/poblacion_nacional)*100000)
+df_nacional = df_nacional %>% mutate(p_vacunas.totales = (vacunas.totales/poblacion_nacional)*100000)
+df_nacional = df_nacional %>% mutate(p_primera.dosis = (primera.dosis/poblacion_nacional)*100000)
+df_nacional = df_nacional %>% mutate(p_segunda.dosis = (segunda.dosis/poblacion_nacional)*100000)
+df_nacional = df_nacional %>% mutate(p_fallecidos = (fallecidos/poblacion_nacional)*100000)
+
 
 #-------------------------------------------------------------------------------#
 #-------------------------------------------------------------------------------#
 
 #Model of new cases
 
-modelo.nacional.1 = gamlss(formula = casos.nuevos~vacunas.totales,
-                           family=PIG, trace=F,data = df_nacional)
-modelo.nacional.2 = gamlss(formula = casos.nuevos~primera.dosis,
-                           family=PIG, trace=F,data = df_nacional)
-modelo.nacional.3 = gamlss(formula = casos.nuevos~segunda.dosis,
-                           family=PIG, trace=F,data = df_nacional)
-modelo.nacional.4 = gamlss(formula = casos.nuevos~vacunas.totales+primera.dosis:segunda.dosis,
-                           family=PIG, trace=F,data = df_nacional)
-modelo.nacional.5 = gamlss(formula = casos.nuevos~primera.dosis+segunda.dosis,
-                           family=PIG, trace=F,data = df_nacional)
-modelo.nacional.6 = gamlss(formula = casos.nuevos~primera.dosis+segunda.dosis+primera.dosis:segunda.dosis,
-                           family=PIG, trace=F,data = df_nacional)
+modelo.nacional.1 = gamlss(formula = p_casos.nuevos~p_vacunas.totales,
+                           family=GA, trace=F,data = df_nacional)
+modelo.nacional.2 = gamlss(formula = p_casos.nuevos~p_primera.dosis,
+                           family=GA, trace=F,data = df_nacional)
+modelo.nacional.3 = gamlss(formula = p_casos.nuevos~p_segunda.dosis,
+                           family=GA, trace=F,data = df_nacional)
+modelo.nacional.4 = gamlss(formula = p_casos.nuevos~p_vacunas.totales+p_primera.dosis:p_segunda.dosis,
+                           family=GA, trace=F,data = df_nacional)
+modelo.nacional.5 = gamlss(formula = p_casos.nuevos~p_primera.dosis+p_segunda.dosis,
+                           family=GA, trace=F,data = df_nacional)
+modelo.nacional.6 = gamlss(formula = p_casos.nuevos~p_primera.dosis+p_segunda.dosis+p_primera.dosis:p_segunda.dosis,
+                           family=GA, trace=F,data = df_nacional)
 
 #Evaluatons
 GAIC(modelo.nacional.1, modelo.nacional.2, modelo.nacional.3, modelo.nacional.4,
@@ -122,7 +133,7 @@ casos_nacional = df_nacional %>% mutate(pred.nuevos.nacional = fitted(modelo.nac
 casos_nacional = casos_nacional %>% mutate(pred.def.nuevos.nacional = fitted(modelo.nacional.5))
 
 #Graphics
-w = ggplot(casos_nacional, aes(Fechas, casos.nuevos))+
+w = ggplot(casos_nacional, aes(Fechas, p_casos.nuevos))+
   geom_point(col="#feb24c")+
   geom_smooth(mapping = aes(Fechas, pred.nuevos.nacional), se=TRUE, method = "gam", col="#fc4e2a")+
   labs(title = "Explanatory model of new cases",
@@ -136,7 +147,7 @@ w = ggplot(casos_nacional, aes(Fechas, casos.nuevos))+
   theme(plot.title = element_text(hjust = 0.5))
 w
 
-w1 = ggplot(casos_nacional, aes(Fechas, casos.nuevos))+
+w1 = ggplot(casos_nacional, aes(Fechas, p_casos.nuevos))+
   geom_point(col="#feb24c")+
   geom_smooth(mapping = aes(Fechas, pred.def.nuevos.nacional), se=TRUE, method = "gam", col="#fc4e2a")+
   labs(title = "Explanatory model of new cases \nwithout interaction between doses",
@@ -151,7 +162,7 @@ w1 = ggplot(casos_nacional, aes(Fechas, casos.nuevos))+
 w1
 
 
-w2 = ggplot(casos_nacional, aes(Fechas, casos.nuevos))+
+w2 = ggplot(casos_nacional, aes(Fechas, p_casos.nuevos))+
   geom_point(col="#feb24c")+
   geom_smooth(mapping = aes(Fechas, pred.nuevos.nacional), se=TRUE, method = "gam", col="#fc4e2a")+
   geom_smooth(mapping = aes(Fechas, pred.def.nuevos.nacional), se=TRUE, method = "gam", col="#fc4e2a")+
@@ -169,7 +180,7 @@ w2 = ggplot(casos_nacional, aes(Fechas, casos.nuevos))+
   theme(plot.title = element_text(hjust = 0.5))
 w2
 
-w3 = ggplot(casos_nacional, aes(Fechas, casos.nuevos))+
+w3a = ggplot(casos_nacional, aes(as.Date(Fechas), p_casos.nuevos))+
   geom_point(col="#feb24c", size=0.5)+
   geom_smooth(mapping = aes(Fechas, pred.nuevos.nacional), se=TRUE, method = "gam",
               col="#fc4e2a", size=0.5, alpha=0.4)+
@@ -177,48 +188,48 @@ w3 = ggplot(casos_nacional, aes(Fechas, casos.nuevos))+
        y="Number of new cases daily",
        tag = "A")+
   annotate(geom="text",x=as.Date("2021-07-15"),
-           y=10000,label=paste("R\u00b2 = ", round(r1_nuevos,4)),fontface="bold", size=4)+
+           y=55,label=paste("R\u00b2 = ", round(r1_nuevos,4)),fontface="bold", size=4)+
   scale_x_date(date_breaks = "1 month", date_labels =  "%b")+
-  scale_y_continuous(limits = c(0, 12500))+
+  scale_y_continuous(limits = c(0, 65))+
   theme_cowplot()+
   theme(plot.title = element_text(hjust = 0.5),
         axis.text.x = element_text(angle = 60, hjust = 1))
-w3
+w3a
 
-w4 = ggplot(casos_nacional, aes(Fechas, casos.nuevos))+
+w4a = ggplot(casos_nacional, aes(Fechas, p_casos.nuevos))+
   geom_point(col="#feb24c", size=0.5)+
   geom_smooth(mapping = aes(Fechas, pred.def.nuevos.nacional), se=TRUE, method = "gam",
               col="#fc4e2a", size=0.5, alpha=0.4)+
   labs(x="Date",
        y="Number of new cases daily")+
   annotate(geom="text",x=as.Date("2021-07-15"),
-           y=10000,label=paste("R\u00b2 = ", round(r2_nuevos,4)),fontface="bold", size=4)+
+           y=55,label=paste("R\u00b2 = ", round(r2_nuevos,4)),fontface="bold", size=4)+
   scale_x_date(date_breaks = "1 month", date_labels =  "%b")+
-  scale_y_continuous(limits = c(0, 12500))+
+  scale_y_continuous(limits = c(0, 65))+
   theme_cowplot()+
   theme(plot.title = element_text(hjust = 0.5),
         axis.text.x = element_text(angle = 60, hjust = 1))
-w4
+w4a
 
 #-------------------------------------------------------------------------------#
 #-------------------------------------------------------------------------------#
 
 #Model of actives cases
 
-modelo.nacional.0.2 = gamlss(formula = casos.activos~casos.nuevos,
-                             family=PIG, trace=F,data = df_nacional)
-modelo.nacional.1.2 = gamlss(formula = casos.activos~vacunas.totales,
-                             family=PIG, trace=F,data = df_nacional)
-modelo.nacional.2.2 = gamlss(formula = casos.activos~vacunas.totales+casos.nuevos,
-                             family=PIG, trace=F,data = df_nacional)
-modelo.nacional.3.2 = gamlss(formula = casos.activos~casos.nuevos+primera.dosis+segunda.dosis,
-                             family=PIG, trace=F,data = df_nacional)
-modelo.nacional.4.2 = gamlss(formula = casos.activos~casos.nuevos+primera.dosis+segunda.dosis+primera.dosis:segunda.dosis,
-                             family=PIG, trace=F,data = df_nacional)
-modelo.nacional.5.2 = gamlss(formula = casos.activos~primera.dosis+segunda.dosis,
-                             family=PIG, trace=F,data = df_nacional)
-modelo.nacional.6.2 = gamlss(formula = casos.activos~primera.dosis+segunda.dosis+primera.dosis:segunda.dosis,
-                             family=PIG, trace=F,data = df_nacional)
+modelo.nacional.0.2 = gamlss(formula = p_casos.activos~p_casos.nuevos,
+                             family=GA, trace=F,data = df_nacional)
+modelo.nacional.1.2 = gamlss(formula = p_casos.activos~p_vacunas.totales,
+                             family=GA, trace=F,data = df_nacional)
+modelo.nacional.2.2 = gamlss(formula = p_casos.activos~p_vacunas.totales+p_casos.nuevos,
+                             family=GA, trace=F,data = df_nacional)
+modelo.nacional.3.2 = gamlss(formula = p_casos.activos~p_casos.nuevos+p_primera.dosis+p_segunda.dosis,
+                             family=GA, trace=F,data = df_nacional)
+modelo.nacional.4.2 = gamlss(formula = p_casos.activos~p_casos.nuevos+p_primera.dosis+p_segunda.dosis+p_primera.dosis:p_segunda.dosis,
+                             family=GA, trace=F,data = df_nacional)
+modelo.nacional.5.2 = gamlss(formula = p_casos.activos~p_primera.dosis+p_segunda.dosis,
+                             family=GA, trace=F,data = df_nacional)
+modelo.nacional.6.2 = gamlss(formula = p_casos.activos~p_primera.dosis+p_segunda.dosis+p_primera.dosis:p_segunda.dosis,
+                             family=GA, trace=F,data = df_nacional)
 
 #Evaluations
 GAIC(modelo.nacional.0.2, modelo.nacional.1.2, modelo.nacional.2.2, modelo.nacional.3.2, 
@@ -232,12 +243,12 @@ r2_activos = Rsq(modelo.nacional.3.2, type = c("Cox Snell","Cragg Uhler","both")
 drop1(modelo.nacional.4.2, parallel = "multicore", ncpus = 4)
 VC.test(modelo.nacional.4.2, modelo.nacional.3.2, sig.lev = 0.05) #Hay diferencias entre ambos modelos
 term.plot(modelo.nacional.5.2, pages = 1, ask = FALSE, rug = TRUE)
-casos.activos = df_nacional %>% mutate(pred.activos.nacional = fitted(modelo.nacional.4.2))
-casos.activos = casos.activos %>% mutate(pred.def.activos.nacional = fitted(modelo.nacional.3.2))
+p_casos.activos = df_nacional %>% mutate(pred.activos.nacional = fitted(modelo.nacional.4.2))
+p_casos.activos = p_casos.activos %>% mutate(pred.def.activos.nacional = fitted(modelo.nacional.3.2))
 
 
 #Graphics
-x = ggplot(casos.activos, aes(Fechas, casos.activos))+
+x = ggplot(p_casos.activos, aes(Fechas, p_casos.activos))+
   geom_point(col="#08519c")+
   geom_smooth(mapping = aes(Fechas, pred.activos.nacional), se=TRUE, method = "gam", col="#9ecae1", alpha=0.4)+
   labs(title = "Explanatory model of active cases",
@@ -251,7 +262,7 @@ x = ggplot(casos.activos, aes(Fechas, casos.activos))+
   theme(plot.title = element_text(hjust = 0.5))
 x
 
-x1 = ggplot(casos.activos, aes(Fechas, casos.activos))+
+x1 = ggplot(p_casos.activos, aes(Fechas, p_casos.activos))+
   geom_point(col="#08519c")+
   geom_smooth(mapping = aes(Fechas, pred.def.activos.nacional), se=TRUE, method = "gam", col="#9ecae1", alpha=0.4)+
   labs(title = "Explanatory model of active cases \nwithout interaction between doses",
@@ -266,7 +277,7 @@ x1 = ggplot(casos.activos, aes(Fechas, casos.activos))+
 x1
 
 
-x3 = ggplot(casos.activos, aes(Fechas, casos.activos))+
+x3a = ggplot(p_casos.activos, aes(Fechas, p_casos.activos))+
   geom_point(col="#08519c", size=0.5)+
   geom_smooth(mapping = aes(Fechas, pred.activos.nacional), se=TRUE, method = "gam",
               col="#9ecae1", alpha=0.4)+
@@ -274,56 +285,56 @@ x3 = ggplot(casos.activos, aes(Fechas, casos.activos))+
        y="Daily active cases",
        tag = "B")+
   annotate(geom="text",x=as.Date("2021-07-15"),
-           y=55000,label=paste("R\u00b2 = ", round(r1_activos,4)),fontface="bold", size=4)+
+           y=320,label=paste("R\u00b2 = ", round(r1_activos,4)),fontface="bold", size=4)+
   scale_x_date(date_breaks = "1 month", date_labels =  "%b")+
-  scale_y_continuous(limits = c(0, 60000))+
+  scale_y_continuous(limits = c(0, 400))+
   theme_cowplot()+
   theme(plot.title = element_text(hjust = 0.5),
         axis.text.x = element_text(angle = 60, hjust = 1))
-x3
+x3a
 
-x4 = ggplot(casos.activos, aes(Fechas, casos.activos))+
+x4a = ggplot(p_casos.activos, aes(Fechas, p_casos.activos))+
   geom_point(col="#08519c", size=0.5)+
   geom_smooth(mapping = aes(Fechas, pred.def.activos.nacional), se=TRUE, method = "gam",
               col="#9ecae1", alpha=0.4)+
   labs(x="Date",
        y="Daily active cases")+
   annotate(geom="text",x=as.Date("2021-07-15"),
-           y=55000,label=paste("R\u00b2 =", round(r2_activos, 4)),fontface="bold",size=4)+
+           y=320,label=paste("R\u00b2 =", round(r2_activos, 4)),fontface="bold",size=4)+
   scale_x_date(date_breaks = "1 month", date_labels =  "%b")+
-  scale_y_continuous(limits = c(0, 60000))+
+  scale_y_continuous(limits = c(0, 400))+
   theme_cowplot()+
   theme(plot.title = element_text(hjust = 0.5),
         axis.text.x = element_text(angle = 60, hjust = 1))
-x4
+x4a
 
 #-------------------------------------------------------------------------------#
 #-------------------------------------------------------------------------------#
 
 #Model of occupied ICU beds
 
-modelo.uci.01 = gamlss(formula = camas.uci~casos.nuevos,
-                       family=PIG, trace=F,data = df_nacional)
-modelo.uci.02 = gamlss(formula = camas.uci~casos.activos,
-                       family=PIG, trace=F,data = df_nacional)
-modelo.uci.03 = gamlss(formula = camas.uci~vacunas.totales,
-                       family=PIG, trace=F,data = df_nacional)
-modelo.uci.04 = gamlss(formula = camas.uci~casos.nuevos+vacunas.totales,
-                       family=PIG, trace=F,data = df_nacional)
-modelo.uci.05 = gamlss(formula = camas.uci~casos.activos+vacunas.totales,
-                       family=PIG, trace=F,data = df_nacional)
-modelo.uci.06 = gamlss(formula = camas.uci~primera.dosis+segunda.dosis,
-                       family=PIG, trace=F,data = df_nacional)
-modelo.uci.07 = gamlss(formula = camas.uci~primera.dosis+segunda.dosis+primera.dosis:segunda.dosis, 
-                       family=PIG, trace=F,data = df_nacional)
-modelo.uci.08 = gamlss(formula = camas.uci~casos.nuevos+primera.dosis+segunda.dosis, 
-                       family=PIG, trace=F,data = df_nacional)
-modelo.uci.09 = gamlss(formula = camas.uci~casos.activos+primera.dosis+segunda.dosis, 
-                       family=PIG, trace=F,data = df_nacional)
-modelo.uci.10 = gamlss(formula = camas.uci~casos.nuevos+primera.dosis+segunda.dosis+primera.dosis:segunda.dosis, 
-                       family=PIG, trace=F,data = df_nacional)
-modelo.uci.11 = gamlss(formula = camas.uci~casos.activos+primera.dosis+segunda.dosis+primera.dosis:segunda.dosis, 
-                       family=PIG, trace=F,data = df_nacional)
+modelo.uci.01 = gamlss(formula = p_camas.uci~p_casos.nuevos,
+                       family=GA, trace=F,data = df_nacional)
+modelo.uci.02 = gamlss(formula = p_camas.uci~p_casos.activos,
+                       family=GA, trace=F,data = df_nacional)
+modelo.uci.03 = gamlss(formula = p_camas.uci~p_vacunas.totales,
+                       family=GA, trace=F,data = df_nacional)
+modelo.uci.04 = gamlss(formula = p_camas.uci~p_casos.nuevos+p_vacunas.totales,
+                       family=GA, trace=F,data = df_nacional)
+modelo.uci.05 = gamlss(formula = p_camas.uci~p_casos.activos+p_vacunas.totales,
+                       family=GA, trace=F,data = df_nacional)
+modelo.uci.06 = gamlss(formula = p_camas.uci~p_primera.dosis+p_segunda.dosis,
+                       family=GA, trace=F,data = df_nacional)
+modelo.uci.07 = gamlss(formula = p_camas.uci~p_primera.dosis+p_segunda.dosis+p_primera.dosis:p_segunda.dosis, 
+                       family=GA, trace=F,data = df_nacional)
+modelo.uci.08 = gamlss(formula = p_camas.uci~p_casos.nuevos+p_primera.dosis+p_segunda.dosis, 
+                       family=GA, trace=F,data = df_nacional)
+modelo.uci.09 = gamlss(formula = p_camas.uci~p_casos.activos+p_primera.dosis+p_segunda.dosis, 
+                       family=GA, trace=F,data = df_nacional)
+modelo.uci.10 = gamlss(formula = p_camas.uci~p_casos.nuevos+p_primera.dosis+p_segunda.dosis+p_primera.dosis:p_segunda.dosis, 
+                       family=GA, trace=F,data = df_nacional)
+modelo.uci.11 = gamlss(formula = p_camas.uci~p_casos.activos+p_primera.dosis+p_segunda.dosis+p_primera.dosis:p_segunda.dosis, 
+                       family=GA, trace=F,data = df_nacional)
 
 #Evaluations
 GAIC(modelo.uci.01, modelo.uci.02, modelo.uci.03, modelo.uci.04, modelo.uci.05, modelo.uci.06,
@@ -341,7 +352,7 @@ uci.nacional = df_nacional %>% mutate(pred.uci = fitted(modelo.uci.11))
 uci.nacional = uci.nacional %>% mutate(pred.uci.mala = fitted(modelo.uci.09))
 
 #Graphics
-y = ggplot(uci.nacional, aes(Fechas, camas.uci))+
+y = ggplot(uci.nacional, aes(Fechas, p_camas.uci))+
   geom_point(alpha=0.7, size=2, color="#807dba")+
   geom_smooth(mapping = aes(Fechas, pred.uci), se=TRUE, method = "gam", 
               size=0.5, alpha=0.8, color="#54278f", fill="#bcbddc")+
@@ -357,7 +368,7 @@ y = ggplot(uci.nacional, aes(Fechas, camas.uci))+
 y
 
 
-y1 = ggplot(uci.nacional, aes(Fechas, camas.uci))+
+y1 = ggplot(uci.nacional, aes(Fechas, p_camas.uci))+
   geom_point(alpha=0.7, size=2, color="#807dba")+
   geom_smooth(mapping = aes(Fechas, pred.uci.mala), se=TRUE, method = "gam", 
               size=0.5, alpha=0.8, color="#54278f", fill="#bcbddc")+
@@ -373,7 +384,7 @@ y1 = ggplot(uci.nacional, aes(Fechas, camas.uci))+
 y1
 
 
-y3 = ggplot(uci.nacional, aes(Fechas, camas.uci))+
+y3a = ggplot(uci.nacional, aes(Fechas, p_camas.uci))+
   geom_point(color="#807dba", size=0.5)+
   geom_smooth(mapping = aes(Fechas, pred.uci), se=TRUE, method = "gam", 
               size=0.5, alpha=0.4, color="#54278f")+
@@ -381,28 +392,28 @@ y3 = ggplot(uci.nacional, aes(Fechas, camas.uci))+
        y = "Occupied ICU beds",
        tag = "C")+
   annotate(geom="text",x=as.Date("2021-07-15"),
-           y=3600,label=paste("R\u00b2 = ", round(r1_uci,4)),fontface="bold", size=4)+
+           y=20,label=paste("R\u00b2 = ", round(r1_uci,4)),fontface="bold", size=4)+
   scale_x_date(date_breaks = "1 month", date_labels =  "%b")+
-  scale_y_continuous(limits = c(0, 4000))+
+  scale_y_continuous(limits = c(0, 25))+
   theme_cowplot()+
   theme(plot.title = element_text(hjust = 0.5),
         axis.text.x = element_text(angle = 60, hjust = 1))
-y3
+y3a
 
-y4 = ggplot(uci.nacional, aes(Fechas, camas.uci))+
+y4a = ggplot(uci.nacional, aes(Fechas, p_camas.uci))+
   geom_point(color="#807dba", size=0.5)+
   geom_smooth(mapping = aes(Fechas, pred.uci.mala), se=TRUE, method = "gam", 
               size=0.5, alpha=0.4, color="#54278f")+
   labs(x = "Date",
        y = "Occupied ICU beds")+
   annotate(geom="text",x=as.Date("2021-07-15"),
-           y=3600,label=paste("R\u00b2 = ", round(r2_uci, 4)),fontface="bold", size=4)+
+           y=20,label=paste("R\u00b2 = ", round(r2_uci, 4)),fontface="bold", size=4)+
   scale_x_date(date_breaks = "1 month", date_labels =  "%b")+
-  scale_y_continuous(limits = c(0, 4000))+
+  scale_y_continuous(limits = c(0, 25))+
   theme_cowplot()+
   theme(plot.title = element_text(hjust = 0.5),
         axis.text.x = element_text(angle = 60, hjust = 1))
-y4
+y4a
 
 
 #-------------------------------------------------------------------------------#
@@ -410,40 +421,40 @@ y4
 
 #Model of weekly moving average of deaths
 
-mod.fallecidos.1 = gamlss(formula = fallecidos~casos.nuevos,
-                          family=IG, trace=F,data = df_nacional)
-mod.fallecidos.2 = gamlss(formula = fallecidos~casos.activos,
-                          family=IG, trace=F,data = df_nacional)
-mod.fallecidos.3 = gamlss(formula = fallecidos~camas.uci,
-                          family=IG, trace=F,data = df_nacional)
-mod.fallecidos.4 = gamlss(formula = fallecidos~casos.nuevos+camas.uci,
-                          family=IG, trace=F,data = df_nacional)
-mod.fallecidos.5 = gamlss(formula = fallecidos~casos.activos+camas.uci,
-                          family=IG, trace=F,data = df_nacional)
-mod.fallecidos.6 = gamlss(formula = fallecidos~casos.nuevos+camas.uci+vacunas.totales,
-                          family=IG, trace=F,data = df_nacional)
-mod.fallecidos.7 = gamlss(formula = fallecidos~casos.activos+camas.uci+vacunas.totales,
-                          family=IG, trace=F,data = df_nacional)
-mod.fallecidos.8 = gamlss(formula = fallecidos~casos.nuevos+camas.uci+primera.dosis+segunda.dosis,
-                          family=IG, trace=F,data = df_nacional)
-mod.fallecidos.9 = gamlss(formula = fallecidos~casos.activos+camas.uci+primera.dosis+segunda.dosis,
-                          family=IG, trace=F,data = df_nacional)
-mod.fallecidos.10 = gamlss(formula = fallecidos~primera.dosis+segunda.dosis,
-                          family=IG, trace=F,data = df_nacional)
-mod.fallecidos.11 = gamlss(formula = fallecidos~casos.nuevos+camas.uci+primera.dosis+segunda.dosis+primera.dosis:segunda.dosis,
-                          family=IG, trace=F,data = df_nacional)
-mod.fallecidos.12 = gamlss(formula = fallecidos~casos.activos+camas.uci+primera.dosis+segunda.dosis+primera.dosis:segunda.dosis,
-                           family=IG, trace=F,data = df_nacional)
-mod.fallecidos.13 = gamlss(formula = fallecidos~primera.dosis+segunda.dosis+primera.dosis:segunda.dosis,
-                           family=IG, trace=F,data = df_nacional)
-mod.fallecidos.14 = gamlss(formula = fallecidos~camas.uci+casos.activos+casos.nuevos,
-                           family=IG, trace=F,data = df_nacional)
-mod.fallecidos.15 = gamlss(formula = fallecidos~camas.uci+casos.activos+casos.nuevos+vacunas.totales,
-                           family=IG, trace=F,data = df_nacional)
-mod.fallecidos.16 = gamlss(formula = fallecidos~camas.uci+casos.activos+casos.nuevos+primera.dosis+segunda.dosis,
-                           family=IG, trace=F,data = df_nacional)
-mod.fallecidos.17 = gamlss(formula = fallecidos~camas.uci+casos.activos+casos.nuevos+primera.dosis+segunda.dosis+primera.dosis:segunda.dosis,
-                           family=IG, trace=F,data = df_nacional)
+mod.fallecidos.1 = gamlss(formula = p_fallecidos~p_casos.nuevos,
+                          family=GA, trace=F,data = df_nacional)
+mod.fallecidos.2 = gamlss(formula = p_fallecidos~p_casos.activos,
+                          family=GA, trace=F,data = df_nacional)
+mod.fallecidos.3 = gamlss(formula = p_fallecidos~p_camas.uci,
+                          family=GA, trace=F,data = df_nacional)
+mod.fallecidos.4 = gamlss(formula = p_fallecidos~p_casos.nuevos+p_camas.uci,
+                          family=GA, trace=F,data = df_nacional)
+mod.fallecidos.5 = gamlss(formula = p_fallecidos~p_casos.activos+p_camas.uci,
+                          family=GA, trace=F,data = df_nacional)
+mod.fallecidos.6 = gamlss(formula = p_fallecidos~p_casos.nuevos+p_camas.uci+p_vacunas.totales,
+                          family=GA, trace=F,data = df_nacional)
+mod.fallecidos.7 = gamlss(formula = p_fallecidos~p_casos.activos+p_camas.uci+p_vacunas.totales,
+                          family=GA, trace=F,data = df_nacional)
+mod.fallecidos.8 = gamlss(formula = p_fallecidos~p_casos.nuevos+p_camas.uci+p_primera.dosis+p_segunda.dosis,
+                          family=GA, trace=F,data = df_nacional)
+mod.fallecidos.9 = gamlss(formula = p_fallecidos~p_casos.activos+p_camas.uci+p_primera.dosis+p_segunda.dosis,
+                          family=GA, trace=F,data = df_nacional)
+mod.fallecidos.10 = gamlss(formula = p_fallecidos~p_primera.dosis+p_segunda.dosis,
+                          family=GA, trace=F,data = df_nacional)
+mod.fallecidos.11 = gamlss(formula = p_fallecidos~p_casos.nuevos+p_camas.uci+p_primera.dosis+p_segunda.dosis+p_primera.dosis:p_segunda.dosis,
+                          family=GA, trace=F,data = df_nacional)
+mod.fallecidos.12 = gamlss(formula = p_fallecidos~p_casos.activos+p_camas.uci+p_primera.dosis+p_segunda.dosis+p_primera.dosis:p_segunda.dosis,
+                           family=GA, trace=F,data = df_nacional)
+mod.fallecidos.13 = gamlss(formula = p_fallecidos~p_primera.dosis+p_segunda.dosis+p_primera.dosis:p_segunda.dosis,
+                           family=GA, trace=F,data = df_nacional)
+mod.fallecidos.14 = gamlss(formula = p_fallecidos~p_camas.uci+p_casos.activos+p_casos.nuevos,
+                           family=GA, trace=F,data = df_nacional)
+mod.fallecidos.15 = gamlss(formula = p_fallecidos~p_camas.uci+p_casos.activos+p_casos.nuevos+p_vacunas.totales,
+                           family=GA, trace=F,data = df_nacional)
+mod.fallecidos.16 = gamlss(formula = p_fallecidos~p_camas.uci+p_casos.activos+p_casos.nuevos+p_primera.dosis+p_segunda.dosis,
+                           family=GA, trace=F,data = df_nacional)
+mod.fallecidos.17 = gamlss(formula = p_fallecidos~p_camas.uci+p_casos.activos+p_casos.nuevos+p_primera.dosis+p_segunda.dosis+p_primera.dosis:p_segunda.dosis,
+                           family=GA, trace=F,data = df_nacional)
 
 #Evaluations
 GAIC(mod.fallecidos.1, mod.fallecidos.2, mod.fallecidos.3, mod.fallecidos.4, mod.fallecidos.5,
@@ -496,7 +507,7 @@ z1 = ggplot(fallecidos.nacional, aes(Fechas, fallecidos))+
 z1
 
 
-z3 = ggplot(fallecidos.nacional, aes(Fechas, fallecidos))+
+z3a = ggplot(fallecidos.nacional, aes(Fechas, p_fallecidos))+
   geom_point(color="#78c679", size=0.5)+
   #geom_line(aes(y=pred.fallecidos))+
   geom_smooth(mapping = aes(Fechas, pred.fallecidos), se=TRUE, method = "gam",
@@ -505,29 +516,29 @@ z3 = ggplot(fallecidos.nacional, aes(Fechas, fallecidos))+
        y= "Weekly moving average of deaths",
        tag = "D")+
   annotate(geom="text",x=as.Date("2021-07-15"),
-           y=200,label=paste("R\u00b2 =", round(r1_fallecidos,4)),fontface="bold", size=4)+
+           y=0.75,label=paste("R\u00b2 =", round(r1_fallecidos,4)),fontface="bold", size=4)+
   scale_x_date(date_breaks = "1 month", date_labels =  "%b")+
-  scale_y_continuous(limits = c(0, 250))+
+  scale_y_continuous(limits = c(0, 1))+
   theme_cowplot()+
   theme(plot.title = element_text(hjust = 0.5),
         axis.text.x = element_text(angle = 60, hjust = 1))
-z3
+z3a
 
 
-z4 = ggplot(fallecidos.nacional, aes(Fechas, fallecidos))+
+z4a = ggplot(fallecidos.nacional, aes(Fechas, p_fallecidos))+
   geom_point(color="#78c679", size=0.5)+
   geom_smooth(mapping = aes(Fechas, pred.fallecidos.mala), se=TRUE, method = "gam",
               color="#004529", size=0.5, alpha=0.4)+
   labs(x ="Date",
        y= "Weekly moving average of deaths")+
   annotate(geom="text",x=as.Date("2021-07-15"),
-           y=200,label=paste("R\u00b2 =", round(r2_fallecidos,4)),fontface="bold", size=4)+
+           y=0.75,label=paste("R\u00b2 =", round(r2_fallecidos,4)),fontface="bold", size=4)+
   scale_x_date(date_breaks = "1 month", date_labels =  "%b")+
-  scale_y_continuous(limits = c(0, 250))+
+  scale_y_continuous(limits = c(0, 1))+
   theme_cowplot()+
   theme(plot.title = element_text(hjust = 0.5),
         axis.text.x = element_text(angle = 60, hjust = 1))
-z4
+z4a
 
 
 #################################################################################
@@ -537,8 +548,8 @@ grid.arrange(w,x,y,z)
 
 grid.arrange(w1,x1,y1,z1)
 
-grid.arrange(arrangeGrob(w3,f,w4,f,x3,f,x4, ncol = 7, widths = c(4,0.5,4,2,4,0.5,4)),
+grid.arrange(arrangeGrob(w3a,f,w4a,f,x3a,f,x4a, ncol = 7, widths = c(4,0.5,4,2,4,0.5,4)),
              arrangeGrob(f, ncol = 1, widths = c(19)),
-             arrangeGrob(y3,f,y4,f,z3,f,z4, ncol=7,widths = c(4,0.5,4,2,4,0.5,4)), 
+             arrangeGrob(y3a,f,y4a,f,z3a,f,z4a, ncol=7,widths = c(4,0.5,4,2,4,0.5,4)), 
              heights=c(2.5/4, 0.3/4, 2.5/4), ncol=1)
 
