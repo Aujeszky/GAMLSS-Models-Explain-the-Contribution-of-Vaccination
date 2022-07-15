@@ -192,27 +192,6 @@ ggplot(data = me39.sem, aes(x = p_Camas)) +
   labs(title = "Distribución UCI entre 18 y 39 normalizados") +
   theme_bw()
 
-AIC(
-  mlbetapr(me39.sem$p_Camas),
-  mlexp(me39.sem$p_Camas),
-  mlinvgamma(me39.sem$p_Camas),
-  mlgamma(me39.sem$p_Camas),
-  mlrayleigh(me39.sem$p_Camas),
-  mlinvgauss(me39.sem$p_Camas),
-  mlweibull(me39.sem$p_Camas),
-  mlinvweibull(me39.sem$p_Camas),
-  mlnorm(me39.sem$p_Camas))
-
-gamlss(me39.sem$p_Camas~1, family = "GA")
-gamlss(me39.sem$p_Camas~1, family = "WEI")
-
-GAIC(gamlss(me39.sem$p_Camas~1, family = "GA"), gamlss(me39.sem$p_Camas~1, family = "WEI"))
-VC.test(gamlss(p_Camas~1, family = "GA", data = me39.sem),
-        gamlss(p_Camas~1, family = "WEI", data = me39.sem))
-
-
-histDist(me39.sem$p_Camas, family=GA, nbins=30, line.col="darkblue", line.wd=2.5)
-
 
 
 #Models
@@ -423,38 +402,7 @@ ggplot(data = de40_49.sem, aes(x = p_Camas)) +
   labs(title = "Distribución UCI entre 18 y 39 normalizados") +
   theme_bw()
 
-AIC(
-  mlbetapr(de40_49.sem$p_Camas),
-  mlexp(de40_49.sem$p_Camas),
-  mlinvgamma(de40_49.sem$p_Camas),
-  mlgamma(de40_49.sem$p_Camas),
-  mlrayleigh(de40_49.sem$p_Camas),
-  mlinvgauss(de40_49.sem$p_Camas),
-  mlweibull(de40_49.sem$p_Camas),
-  mlinvweibull(de40_49.sem$p_Camas),
-  mlnorm(de40_49.sem$p_Camas))
 
-BIC(
-  mlbetapr(de40_49.sem$p_Camas),
-  mlexp(de40_49.sem$p_Camas),
-  mlinvgamma(de40_49.sem$p_Camas),
-  mlgamma(de40_49.sem$p_Camas),
-  mlrayleigh(de40_49.sem$p_Camas),
-  mlinvgauss(de40_49.sem$p_Camas),
-  mlweibull(de40_49.sem$p_Camas),
-  mlinvweibull(de40_49.sem$p_Camas),
-  mlnorm(de40_49.sem$p_Camas))
-
-library(gamlss.dist)
-
-distribuciones = fitDist(
-  de40_49.sem$p_Camas,
-  k = 2, # esta penalización equivale al AIC
-  type = "realplus",
-  trace = FALSE,
-  try.gamlss = TRUE
-)
-summary(distribuciones)
 
 histDist(de40_49.sem$p_Camas, family=GA, nbins=30, line.col="darkblue", line.wd=2.5)
 
@@ -656,27 +604,6 @@ ggplot(data = de40_49.sem, aes(x = p_Camas)) +
   geom_rug(alpha = 0.2) +
   labs(title = "Distribución UCI entre 18 y 39 normalizados") +
   theme_bw()
-
-AIC(
-  mlbetapr(de50_59.sem$p_Camas),
-  mlexp(de50_59.sem$p_Camas),
-  mlinvgamma(de50_59.sem$p_Camas),
-  mlgamma(de50_59.sem$p_Camas),
-  mlrayleigh(de50_59.sem$p_Camas),
-  mlinvgauss(de50_59.sem$p_Camas),
-  mlweibull(de50_59.sem$p_Camas),
-  mlinvweibull(de50_59.sem$p_Camas),
-  mlnorm(de50_59.sem$p_Camas))
-
-BIC(mlbetapr(de50_59.sem$p_Camas),
-    mlexp(de50_59.sem$p_Camas),
-    mlinvgamma(de50_59.sem$p_Camas),
-    mlgamma(de50_59.sem$p_Camas),
-    mlrayleigh(de50_59.sem$p_Camas),
-    mlinvgauss(de50_59.sem$p_Camas),
-    mlweibull(de50_59.sem$p_Camas),
-    mlinvweibull(de50_59.sem$p_Camas),
-    mlnorm(de50_59.sem$p_Camas))
 
 
 #Models
@@ -1169,15 +1096,3 @@ uci_edad_1 = grid.arrange(arrangeGrob(a1,f,a2,f,b1,f,b2, ncol = 7, widths = c(43
                           arrangeGrob(f, ncol = 1, widths = c(180)),
                           arrangeGrob(e1,f,e2,f, ncol=4,widths = c(43, 1, 43, 93)),
                           heights=c(26, 2, 26, 2, 26), ncol=1)
-
-
-ggsave(uci_edad_1, file="uci_edad_1.tiff", width = 6460, height = 4910, units = "px", dpi = 300)
-
-tiff(uci_edad_1,"uci_edad_1.tiff", width = 4, height = 4, pointsize = 1/300, units = 'in', res = 300, type="tifflzw")
-plot(uci_edad_1) # Make plot
-dev.off()
-
-
-png(uci_edad_1, file="uci_edad_1.tiff", width = 2126, height = 1329, units = "px", res = 300)
-uci_edad_1
-dev.off()
